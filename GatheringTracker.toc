@@ -1,0 +1,12 @@
+## Interface: 70100
+## Title: Gathering Tracker
+## Notes: Tracks rate at which you gather profesional materials.
+## SavedVariables: GatheringTrackerDB
+## SavedVariablesPerCharacter: GatheringTrackerDBChr
+## X-Curse-Project-Name: Gathering Tracker
+## X-Curse-Project-ID: gathering-tracker
+
+locales\enUS.lua
+
+GatheringTracker.lua
+GatheringTracker.xml
