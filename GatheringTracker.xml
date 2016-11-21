@@ -1,3 +1,25 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
-
+<Frame name="GatheringTracker" parent="UIParent" frameStrata="MEDIUM" hidden="false">
+	<Size>
+		<AbsDimension x="200" y="20"/>
+	</Size>
+	<Anchors>
+		<Anchor point="LEFT" relativePoint="CENTER">
+			<Offset>
+				<AbsDimension x="100" y="100">
+			</Offset>
+		</Anchor>
+	</Anchors>
+	<Backdrop bgFile="Interface\\Tooltips\\UI-Tooltip-Backgro" edgeFile="Interface/Tooltips/UI-Tooltip-Border" tile="true">
+		<EdgeSize>
+			<AbsValue val="16"/>
+		</EdgeSize>
+		<TileSize>
+			<AbsValue val="16"/>
+		</TileSize>
+		<BackgroundInsets>
+			<AbsInset left="5" right="5" top="5" bottom="5"/>
+		</BackgroundInsets>
+    </Backdrop>
+</Frame>
 </Ui>
