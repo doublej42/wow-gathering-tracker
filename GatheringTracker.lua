@@ -31,11 +31,12 @@ function GatheringTracker:OnInitialize()
      if (self.db.char.bagdata == nil or self.db.char.bagdata.Test == nil) then
         self.db.char.bagdata = BagData:new(self.db.char.bagdata,self)
     end
+    self.db.char.bagdata:Reset()
 end
 
 function GatheringTracker:OnEnable()
     self:Print("OnEnable")
-    self:Print(GatheringTracker.db.profile.timeFrame)
+    --self:Print(GatheringTracker.db.profile.timeFrame)
     if type(GatheringTracker.db.profile.timeFrame) ~= "number" then
         GatheringTracker.db.profile.timeFrame = 60;
     end -- end if
@@ -51,19 +52,19 @@ function GatheringTracker:GetTimeFrame(info)
 end
 
 function GatheringTracker:SetTimeFrame(info,input)
-    self:Print("Rate now set to items per "..input.." minutes.")
+    --self:Print("Rate now set to items per "..input.." minutes.")
     self.db.profile.timeFrame = input
 end
 
 
 function GatheringTracker:BAG_UPDATE(eventName,bagId)
-    self:Print(eventName)
+    --self:Print(eventName)
     --self:Print(bagId)
     self:ScanBag(bagId)
 end
 
 function GatheringTracker:BAG_UPDATE_DELAYED(eventName)
-    self:Print(eventName)
+    --self:Print(eventName)
     self:FinalizeTracking()
 end
 --[[]
@@ -86,12 +87,12 @@ function GatheringTracker:ScanBag(bagId)
 		local texture, itemCount, _, quality, _, _, itemLink = GetContainerItemInfo(bagId, slotId)
 		if itemLink ~= nil then
             local _,_,itemType, itemNumber, itemName = string.find(itemLink,"|%x*|H([^:]*):(%d*):[^|]*|h%[([^%]]*)")
-			self:Print("-------------------------------------------")
+			--self:Print("-------------------------------------------")
             --printable = gsub(itemLink, "|", "||");
             --self:Print(printable)
             --self:Print("ItemType :"..itemType)
             --self:Print("Name:"..itemNumber)
-            self:Print(itemLink.." x"..itemCount)
+            --self:Print(itemLink.." x"..itemCount)
             --self:Print("texture:"..texture)
             --self:Print("itemCount:"..itemCount)
             --self:Print("quality:"..quality)
@@ -101,8 +102,8 @@ function GatheringTracker:ScanBag(bagId)
                     --check the current bag item
                     --self:Print("Calling Bag update")
                     --self.db.char.bagdata:Test()
-                    
-                    self.db.char.bagdata:UpdateItem(bagId,slotId,itemName,itemNumber,itemCount,texture)
+                    self.db.char.bagdata:ItemDataCache(itemNumber,itemName,texture,itemLink)
+                    self.db.char.bagdata:UpdateItem(bagId,slotId,itemNumber,itemCount)
                     --UpdateItem(bagId,slotId,itemName,itemNumber,itemCount,texture)
                 end -- end quality check
             end -- end item type check
@@ -115,9 +116,9 @@ end
 
 
 function GatheringTracker:FinalizeTracking()
-    self:Print("FinalizeTracking")
+    --self:Print("FinalizeTracking")
     self.db.char.bagdata:LogChanges()
-    self:Print("DONE FinalizeTracking")
+    --self:Print("DONE FinalizeTracking")
 end
 
 
