@@ -1,4 +1,4 @@
-GatheringTracker = LibStub("AceAddon-3.0"):NewAddon("GatheringTracker", "AceConsole-3.0","AceEvent-3.0")
+GatheringTracker = LibStub("AceAddon-3.0"):NewAddon("Gathering Tracker", "AceConsole-3.0","AceEvent-3.0")
 
 
 local options = {
@@ -16,49 +16,73 @@ local options = {
     },
 }
 
-
+--[[
+function GatheringTracker:InitReady()
+    if (GatheringTrackerDBChr == nil) then
+        self:Print("|cFF0000FFGatheringTrackerDBChr not ready|r")
+        else
+        if (not GatheringTrackerDBChr.status == "ready") then
+            self:Print("|cFFFF0000Not Ready|r")
+        else
+            self:Print("|cFF00FF00Ready|r")
+        end
+    end
+    
+end
+]]
 
 
 function GatheringTracker:OnInitialize()
   -- Code that you want to run when the addon is first loaded goes here.
-    self:Print("OnInitialize")
+    --self:Print("OnInitialize")
+    --self:InitReady()
     self.db = LibStub("AceDB-3.0"):New("GatheringTrackerDB")
     options.args.profile = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
     LibStub("AceConfig-3.0"):RegisterOptionsTable("GatheringTracker", options, {"gt", "GatheringTracker"})
     GatheringTracker:RegisterEvent("BAG_UPDATE")
     GatheringTracker:RegisterEvent("BAG_UPDATE_DELAYED")
     GatheringTracker:RegisterEvent("PLAYER_ENTERING_WORLD")
-    --GatheringTracker:RegisterEvent("ITEM_PUSH")
-    if (bagData == nil or bagData.Test == nil) then       
-        bagData = BagData:new(bagData,self,GatheringTrackerDBChr.bagdata)
+
+    if (GatheringTrackerDBChr == nil) then
+        self:Print("Firts time setup for character data")
+        GatheringTrackerDBChr = {}
+        GatheringTrackerDBChr.status = "ready"
+        GatheringTrackerDBChr.bagdata = {}
     end
-    bagData:Reset()
+  
+    if (type(GatheringTrackerDBChr.bagdata) ~= "table") then
+        GatheringTrackerDBChr.bagdata = {}
+    end 
+    --self:Print("before "..type(GatheringTrackerDBChr.bagdata.bag))
+    --self:Print("before zero "..type(GatheringTrackerDBChr.bagdata.bag["0"]))
+    --self:Print("before z2 "..type(GatheringTrackerDBChr.bagdata.bag["0"]["2"]))
+    --self:Print("before z2t "..type(GatheringTrackerDBChr.bagdata.bag["0"]["2"].itemNumber))
+    --self:Print("before z2 "..GatheringTrackerDBChr.bagdata.bag["0"]["2"].itemNumber)
+    --BagData = BagData:new(BagData,self,GatheringTrackerDBChr.bagdata)
+    BagData:Init(self,GatheringTrackerDBChr.bagdata)
+    --self:Print("after "..type(GatheringTrackerDBChr.bagdata.bag))
+    --self:Print("bee")
+        --self:Print(GatheringTrackerDBChr.bagdata.status)
+  
+    --BagData:Reset()
 end
 
 function GatheringTracker:OnEnable()
-    self:Print("OnEnable")
+    --self:Print("OnEnable")
+    --self:InitReady()
     --self:Print(GatheringTracker.db.profile.timeFrame)
     if type(GatheringTracker.db.profile.timeFrame) ~= "number" then
         GatheringTracker.db.profile.timeFrame = 60;
     end -- end if
-    --self:Print(bagData.bag["0"]["1"].itemNumber)
+    --self:Print(BagData.bag["0"]["1"].itemNumber)
     
     --if (GatheringTrackerDBChr.bag ~= nil) then
     --    self:Print(table.getn(GatheringTrackerDBChr.bag))
     --end
 
     
-    bagData:ScanBags()
-    if (GatheringTrackerDBChr ~= nil and GatheringTrackerDBChr.bagdata ~= nil and  GatheringTrackerDBChr.bagdata.changes ~= nil) then
-        if (table.getn(GatheringTrackerDBChr.bagdata.changes)) then
-            self:Print("New items since last login")
-            --bagData:LogChanges()
-            bagData:ClearChanges()
-        else
-            self:Print("no new items since last login. Check out the legion app.")
-        end
-    end
-    self.ready = true
+    
+    
     -- Called when the addon is enabled
 end
 
@@ -78,14 +102,25 @@ end
 
 function GatheringTracker:PLAYER_ENTERING_WORLD(eventName)
     self:Print(eventName)
-
+    BagData:ScanBags() -- scan bags on login
+    if (GatheringTrackerDBChr ~= nil and GatheringTrackerDBChr.bagdata ~= nil and  GatheringTrackerDBChr.bagdata.changes ~= nil) then
+        if (BagData:AnyChanges()) then
+            self:Print("New items since last login")
+            BagData:LogChanges()
+            BagData:ClearChanges()
+        else
+            self:Print("No new items since last login. Check out the legion app.")
+        end
+    end
+    self.ready = true
+    --self:InitReady()
 end
 
 function GatheringTracker:BAG_UPDATE(eventName,bagId)
-    self:Print(eventName)
+    --self:Print(eventName)
     --self:Print(bagId)
     if (self.ready) then
-        --bagData:ScanBag(bagId)
+        BagData:ScanBag(bagId)
     end
 end
 
@@ -108,8 +143,12 @@ end
 
 function GatheringTracker:FinalizeTracking()
     --self:Print("FinalizeTracking")
-    --bagData:LogChanges()
-    --bagData:ClearChanges()
+    if (BagData:AnyChanges()) then
+            self:Print("Item changes")
+            BagData:LogChanges()
+            BagData:ClearChanges()
+    end
+    
     --self:Print("DONE FinalizeTracking")
 end
 

@@ -2,48 +2,60 @@
 --bagdata
 BagData = {} 
 
+--[[
 function BagData:new(o, console, database)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
-    self.console = console
-    self.database = database
-    if (self.database == nil) then
-        self.database = {}
-    end
-    --if (not self.database.changes) then
-        self.database.changes = {}
-    --end
-        if (not self.database.itemData) then
-        self.database.itemData = {}
-    end
-    if (not self.database.bag) then
-        self.database.bag = {}
-    end 
+    self:Init(console, database)
     return o
 end
+]]
 
+function BagData:Init(console, database)
+    self.console = console
+    self.database = database
+    self.changes = {} 
+    if (self.database.itemData == nil) then
+        self.database.itemData = {}
+    end
+    --self.console:Print("self.database.bag type "..type(self.database.bag))
+    --self.console:Print("GatheringTrackerDBChr.bagdata.bag type "..type(GatheringTrackerDBChr.bagdata.bag))
+    --self.console:Print("|cFFFF0000durring z2|r "..self.database.bag["0"]["2"].itemNumber)
+    if (self.database.bag == nil) then
+        self.console:Print("initing bag")
+        self.database.bag = {}
+    end 
+end
 
 function BagData:Test()
     self.console:Print("basedata test called")
 end
 
+--[[
 function BagData:Reset()
     self.database.bag = {}
-    self.database.changes = {}
+    BagData.changes = {}
     self.database.itemData = {}
 end
-
+]]
 
 
 function BagData:InitBag(bagId,slotId)
-    if (not self.database.bag[tostring(bagId)]) then
-    self.console:Print("Initializing bag "..bagId)
+    --self.console:Print("|cFFFF0000DR z2|r "..self.database.bag["0"]["2"].itemNumber)
+    --self.console:Print("self.database.bag InitBag type "..type(self.database.bag))
+    --self.console:Print("|cFFFF0000self.database.bag[id] InitBag type|r "..type(self.database.bag[tostring(bagId)]))
+    
+    if (self.database.bag[tostring(bagId)] == nil) then
+        self.console:Print("Initialize bag "..bagId)
         self.database.bag[tostring(bagId)] = {}
     end
-    if (not self.database.bag[tostring(bagId)][tostring(slotId)]) then
-    self.console:Print("Initializing bag "..bagId .." slot id : "..slotId)
+    --self.console:Print("|cFF00FF00self.database.bag[id][tostring(slotId)] InitBag type|r "..type(self.database.bag[tostring(bagId)][tostring(slotId)]))
+    if (self.database.bag[tostring(bagId)][tostring(slotId)] == nil) then
+        self.console:Print("Initialize bag "..bagId .." slot id : "..slotId)
         self.database.bag[tostring(bagId)][tostring(slotId)] = {}
+        self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber = "empty"
+        self.database.bag[tostring(bagId)][tostring(slotId)].itemCount = 0
     end
 end
 
@@ -75,7 +87,7 @@ function BagData:UpdateItem(bagId,slotId,itemNumber,itemCount)
      ]]
     --self.console.Print(itemNumber)
     if (self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber ~= itemNumber) then -- item in slot changed
-        self.console:Print("An item in bag id "..bagId.." slot "..slotId.." was ".." is now "..itemNumber)
+        --self.console:Print("An item in bag id "..bagId.." slot "..slotId.." was ".." is now "..itemNumber)
         
         local oldItemNumber = self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber
         if (oldItemNumber ~= nil) then -- slot was not empty before empty it and uncount it's contents first
@@ -89,9 +101,9 @@ function BagData:UpdateItem(bagId,slotId,itemNumber,itemCount)
     end -- end changeB
     --save the new item
     self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber = itemNumber
-    if (self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber ~= itemNumber) then
-        self.console:Print("MAJOR ERROR")
-    end
+    --if (self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber ~= itemNumber) then
+        --self.console:Print("MAJOR ERROR")
+    --end
     self.database.bag[tostring(bagId)][tostring(slotId)].itemCount = itemCount
     --self.console:Print("Became "..self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber.." to "..self.database.bag[tostring(bagId)][tostring(slotId)].itemCount.." in bag "..bagId.." slot "..slotId)
 end -- end UpdateItem
@@ -99,23 +111,31 @@ end -- end UpdateItem
 
 function BagData:ClearItem(bagId,slotId)
     self:InitBag(bagId,slotId)
-    if (self.database.bag[tostring(bagId)][tostring(slotId)] == nil) then
+    if (self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber == "empty") then
         return -- already blank
     end
     local oldItemNumber = self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber
-    if (oldItemNumber ~= nil) then -- slot was not empty before
+    if (oldItemNumber ~= nil and oldItemNumber ~= "empty") then -- slot was not empty before
         --self.console:Print("removing stack of " .. oldItemNumber)
         self:SubtractItem(oldItemNumber,self.database.bag[tostring(bagId)][tostring(slotId)].itemCount)
-        self.database.bag[tostring(bagId)][tostring(slotId)] = nil;
+        self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber = "empty";
+        self.database.bag[tostring(bagId)][tostring(slotId)].itemCount = 0;
         --self.console:Print(oldItemNumber.."*"..self.database.changes[oldItemNumber])
     end -- end empty slot
 end
 
 function BagData:AddItem(itemNumber,itemCount)
-    --self.console:Print("Adding "..itemCount.." of "..itemNumber)
-    self.database.changes[tostring(itemNumber)] = self:ToZero(self.database.changes[itemNumber]) + itemCount
+    if (itemCount ~= 0) then
+        --self.console:Print("Adding "..itemCount.." of "..itemNumber)
+        self.changes[tostring(itemNumber)] = self:ToZero(self.changes[tostring(itemNumber)]) + itemCount
+        --self.console:Print("result "..self.changes[tostring(itemNumber)].." of "..itemNumber)
+        if (self.changes[tostring(itemNumber)] == 0) then
+            --self.console:Print("zero "..self.changes[tostring(itemNumber)].." of "..itemNumber)
+            self.changes[tostring(itemNumber)]  = nil
+        end
+    end
     --self.console:Print("AddItem changes: ".. #self.database.changes)
-end -- SubtractItem
+end -- AddItem
 
 function BagData:SubtractItem(itemNumber,itemCount)
     self:AddItem(itemNumber,itemCount * -1)
@@ -123,23 +143,39 @@ end -- SubtractItem
 
 function BagData:LogChanges()
     --self.console:Print("LogChanges : ".. #self.database.changes)
-    for key,value in pairs(self.database.changes) do
-        if (value ~= 0) then
-            DEFAULT_CHAT_FRAME:AddMessage(self.database.itemData[key].itemLink.."x|cFF00FF00"..value.."|r")
+    for key,value in pairs(self.changes) do
+        if (value > 0) then
+            DEFAULT_CHAT_FRAME:AddMessage(self.database.itemData[key].itemLink.."|cFF00FF00 gained |r"..value)
+        elseif (value < 0) then
+            DEFAULT_CHAT_FRAME:AddMessage(self.database.itemData[key].itemLink.."|cFFFF0000 lost |r"..value)
         end
     end
     --self.console:Print("DONE LogChanges")
 end
 
+function BagData:ChangesCount()
+  local count = 0
+  for _ in pairs(self.changes) do count = count + 1 end
+  return count
+end
+
+function BagData:AnyChanges()
+
+    return (self:ChangesCount() > 0)
+end
+
+
+
 function BagData:ClearChanges()
-    self.database.changes = {}
+   self.console:Print("ClearChanges")
+   wipe(self.changes)
 end
 
 function BagData:ScanBags()
-	--for bagId = 0, NUM_BAG_SLOTS do
-    for bagId = 0, 1 do
+	for bagId = 0, NUM_BAG_SLOTS do
 		self:ScanBag(bagId)
 	end
+    --self:ScanBag(0)
 end
 
 function BagData:ScanBank()
@@ -164,7 +200,7 @@ end
 function BagData:ScanBag(bagId)
 	local numSlots = GetContainerNumSlots(bagId)
     ret = {}
-   self.console:Print("|cFF00FF00Bag|r"..bagId.." number slots: "..numSlots)
+    --self.console:Print("|cFF00FF00Bag|r "..bagId.." number slots: "..numSlots)
 	for slotId = 1, numSlots do
         --self.console:Print("slot:"..slotId)
 		local texture, itemCount, _, quality, _, _, itemLink = GetContainerItemInfo(bagId, slotId)

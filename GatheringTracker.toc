@@ -5,7 +5,7 @@
 ## SavedVariablesPerCharacter: GatheringTrackerDBChr
 ## X-Curse-Project-Name: Gathering Tracker
 ## X-Curse-Project-ID: gathering-tracker
-## Dependencies: DataStore, DataStore_Containers
+
 
 ## OptionalDeps: Ace3
 
