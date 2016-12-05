@@ -13,6 +13,6 @@
 # Libraries
 embeds.xml
 #@end-no-lib-strip@
-
+ItemFrame.lua
 BagData.lua
 GatheringTracker.lua

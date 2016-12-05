@@ -28,12 +28,11 @@ function GatheringTracker:OnInitialize()
     GatheringTracker:RegisterEvent("BAG_UPDATE")
     GatheringTracker:RegisterEvent("BAG_UPDATE_DELAYED")
     GatheringTracker:RegisterEvent("PLAYER_ENTERING_WORLD")
-    
     --GatheringTracker:RegisterEvent("ITEM_PUSH")
-    if (self.db.char.bagdata == nil or self.db.char.bagdata.Test == nil) then
-        self.db.char.bagdata = BagData:new(self.db.char.bagdata,self)
+    if (bagData == nil or bagData.Test == nil) then       
+        bagData = BagData:new(bagData,self,GatheringTrackerDBChr.bagdata)
     end
-    self.db.char.bagdata:Reset()
+    bagData:Reset()
 end
 
 function GatheringTracker:OnEnable()
@@ -42,11 +41,30 @@ function GatheringTracker:OnEnable()
     if type(GatheringTracker.db.profile.timeFrame) ~= "number" then
         GatheringTracker.db.profile.timeFrame = 60;
     end -- end if
+    --self:Print(bagData.bag["0"]["1"].itemNumber)
+    
+    --if (GatheringTrackerDBChr.bag ~= nil) then
+    --    self:Print(table.getn(GatheringTrackerDBChr.bag))
+    --end
+
+    
+    bagData:ScanBags()
+    if (GatheringTrackerDBChr ~= nil and GatheringTrackerDBChr.bagdata ~= nil and  GatheringTrackerDBChr.bagdata.changes ~= nil) then
+        if (table.getn(GatheringTrackerDBChr.bagdata.changes)) then
+            self:Print("New items since last login")
+            --bagData:LogChanges()
+            bagData:ClearChanges()
+        else
+            self:Print("no new items since last login. Check out the legion app.")
+        end
+    end
+    self.ready = true
     -- Called when the addon is enabled
 end
 
 function GatheringTracker:OnDisable()
     -- Called when the addon is disabled
+    self.ready = false
 end
 
 function GatheringTracker:GetTimeFrame(info)
@@ -60,21 +78,15 @@ end
 
 function GatheringTracker:PLAYER_ENTERING_WORLD(eventName)
     self:Print(eventName)
-    self.db.char.bagdata:ScanBags()
-    self:Print("About to LogChanges")
-    self.db.char.bagdata:LogChanges()
-    self:Print("About to ClearChanges")
-    self.db.char.bagdata:ClearChanges()
-    self:Print("About to LogChanges - should say nothing")
-    self.db.char.bagdata:LogChanges()
-    
 
 end
 
 function GatheringTracker:BAG_UPDATE(eventName,bagId)
     self:Print(eventName)
     --self:Print(bagId)
-    self.db.char.bagdata:ScanBag(bagId)
+    if (self.ready) then
+        --bagData:ScanBag(bagId)
+    end
 end
 
 function GatheringTracker:BAG_UPDATE_DELAYED(eventName)
@@ -96,8 +108,8 @@ end
 
 function GatheringTracker:FinalizeTracking()
     --self:Print("FinalizeTracking")
-    self.db.char.bagdata:LogChanges()
-    self.db.char.bagdata:ClearChanges()
+    --bagData:LogChanges()
+    --bagData:ClearChanges()
     --self:Print("DONE FinalizeTracking")
 end
 
