@@ -75,19 +75,17 @@ function BagData:ItemDataCache(itemNumber,itemName,texture,itemLink)
     self.database.itemData[key].itemLink = itemLink
 end
 
+function BagData:ItemDataCacheAdd(itemNum,itemCount)
+    
+    self.database.itemData[itemNum].Count = self:ToZero(self.database.itemData[itemNum].Count) + itemCount
+    self.console:Print("new count "..self.database.itemData[itemNum].itemLink .." "..self.database.itemData[itemNum].Count)
+end
+
 function BagData:UpdateItem(bagId,slotId,itemNumber,itemCount)
     --self.console:Print("Updating item number:"..itemNumber.." to "..itemCount.." in bag "..bagId.." slot "..slotId)
     self:InitBag(bagId,slotId)
-    --[[
-    if (not self.database.bag[tostring(bagId)][tostring(slotId)]) then
-        self.console:Print("Was "..self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber.." to "..self.database.bag[tostring(bagId)][tostring(slotId)]["itemCount"].." in bag "..bagId.." slot "..slotId)
-    else
-        self.console:Print("Was empty in bag "..bagId.." slot "..slotId)
-    end
-     ]]
-    --self.console.Print(itemNumber)
     if (self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber ~= itemNumber) then -- item in slot changed
-        --self.console:Print("An item in bag id "..bagId.." slot "..slotId.." was ".." is now "..itemNumber)
+        self.console:Print("An item in bag id "..bagId.." slot "..slotId.." was ".." is now "..itemNumber)
         
         local oldItemNumber = self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber
         if (oldItemNumber ~= nil) then -- slot was not empty before empty it and uncount it's contents first
@@ -116,7 +114,7 @@ function BagData:ClearItem(bagId,slotId)
     end
     local oldItemNumber = self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber
     if (oldItemNumber ~= nil and oldItemNumber ~= "empty") then -- slot was not empty before
-        --self.console:Print("removing stack of " .. oldItemNumber)
+        self.console:Print("removing stack of " .. oldItemNumber)
         self:SubtractItem(oldItemNumber,self.database.bag[tostring(bagId)][tostring(slotId)].itemCount)
         self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber = "empty";
         self.database.bag[tostring(bagId)][tostring(slotId)].itemCount = 0;
@@ -125,16 +123,18 @@ function BagData:ClearItem(bagId,slotId)
 end
 
 function BagData:AddItem(itemNumber,itemCount)
+    local itemNum = tostring(itemNumber)
     if (itemCount ~= 0) then
-        --self.console:Print("Adding "..itemCount.." of "..itemNumber)
-        self.changes[tostring(itemNumber)] = self:ToZero(self.changes[tostring(itemNumber)]) + itemCount
+        self.console:Print("Adding "..itemCount.." of "..itemNumber)
+        self.changes[itemNum] = self:ToZero(self.changes[itemNum]) + itemCount
         --self.console:Print("result "..self.changes[tostring(itemNumber)].." of "..itemNumber)
-        if (self.changes[tostring(itemNumber)] == 0) then
+        if (self.changes[itemNum] == 0) then
             --self.console:Print("zero "..self.changes[tostring(itemNumber)].." of "..itemNumber)
-            self.changes[tostring(itemNumber)]  = nil
+            self.changes[itemNum]  = nil
         end
+        --update totals
+        self:ItemDataCacheAdd(itemNum,itemCount)
     end
-    --self.console:Print("AddItem changes: ".. #self.database.changes)
 end -- AddItem
 
 function BagData:SubtractItem(itemNumber,itemCount)
@@ -160,11 +160,8 @@ function BagData:ChangesCount()
 end
 
 function BagData:AnyChanges()
-
     return (self:ChangesCount() > 0)
 end
-
-
 
 function BagData:ClearChanges()
    self.console:Print("ClearChanges")
@@ -175,7 +172,6 @@ function BagData:ScanBags()
 	for bagId = 0, NUM_BAG_SLOTS do
 		self:ScanBag(bagId)
 	end
-    --self:ScanBag(0)
 end
 
 function BagData:ScanBank()
@@ -206,24 +202,11 @@ function BagData:ScanBag(bagId)
 		local texture, itemCount, _, quality, _, _, itemLink = GetContainerItemInfo(bagId, slotId)
 		if itemLink ~= nil then
             local _,_,itemType, itemNumber, itemName = string.find(itemLink,"|%x*|H([^:]*):(%d*):[^|]*|h%[([^%]]*)")
-			--self:Print("-------------------------------------------")
-            --printable = gsub(itemLink, "|", "||");
-            --self:Print(printable)
-            --self:Print("ItemType :"..itemType)
-            --self:Print("Name:"..itemNumber)
-            --self:Print(itemLink.." x"..itemCount)
-            --self:Print("texture:"..texture)
-            --self:Print("itemCount:"..itemCount)
-            --self:Print("quality:"..quality)
-            --self:Print("itemLink:"..itemLink)
             if (itemType == "item") then
                 if (quality >= 1) then-- ignore poor items (trash)
                     --check the current bag item
-                    --self:Print("Calling Bag update")
-                    --self.db.char.bagdata:Test()
                     self:ItemDataCache(itemNumber,itemName,texture,itemLink)
                     self:UpdateItem(bagId,slotId,itemNumber,itemCount)
-                    --UpdateItem(bagId,slotId,itemName,itemNumber,itemCount,texture)
                 end -- end quality check
             end -- end item type check
         else -- blank spot

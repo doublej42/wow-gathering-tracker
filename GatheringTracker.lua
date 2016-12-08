@@ -53,18 +53,9 @@ function GatheringTracker:OnInitialize()
     if (type(GatheringTrackerDBChr.bagdata) ~= "table") then
         GatheringTrackerDBChr.bagdata = {}
     end 
-    --self:Print("before "..type(GatheringTrackerDBChr.bagdata.bag))
-    --self:Print("before zero "..type(GatheringTrackerDBChr.bagdata.bag["0"]))
-    --self:Print("before z2 "..type(GatheringTrackerDBChr.bagdata.bag["0"]["2"]))
-    --self:Print("before z2t "..type(GatheringTrackerDBChr.bagdata.bag["0"]["2"].itemNumber))
-    --self:Print("before z2 "..GatheringTrackerDBChr.bagdata.bag["0"]["2"].itemNumber)
-    --BagData = BagData:new(BagData,self,GatheringTrackerDBChr.bagdata)
     BagData:Init(self,GatheringTrackerDBChr.bagdata)
-    --self:Print("after "..type(GatheringTrackerDBChr.bagdata.bag))
-    --self:Print("bee")
-        --self:Print(GatheringTrackerDBChr.bagdata.status)
-  
-    --BagData:Reset()
+    ItemFrame:Init(self)
+    ItemFrame:Create()
 end
 
 function GatheringTracker:OnEnable()
@@ -146,7 +137,15 @@ function GatheringTracker:FinalizeTracking()
     if (BagData:AnyChanges()) then
             self:Print("Item changes")
             BagData:LogChanges()
+            for key,value in pairs(BagData.changes) do
+                if (value > 0) then
+                    ItemFrame:AddItem(key,GatheringTrackerDBChr.bagdata)
+                elseif (value < 0) then
+                    --DEFAULT_CHAT_FRAME:AddMessage(self.database.itemData[key].itemLink.."|cFFFF0000 lost |r"..value)
+                end
+            end
             BagData:ClearChanges()
+            ItemFrame:Update(GatheringTrackerDBChr.bagdata)
     end
     
     --self:Print("DONE FinalizeTracking")
