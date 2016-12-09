@@ -1,4 +1,6 @@
 ItemFrame = {} 
+ItemFrame.IconSize = 32
+ItemFrame.SidePadding = 6
 
 
 function ItemFrame:new(o, console)
@@ -19,7 +21,8 @@ end
 function ItemFrame:Create()
     self.Frame = CreateFrame("Frame","ItemFrame",UIParent)
     self.Frame:ClearAllPoints()
-    self.Frame:SetPoint("CENTER")
+    self.Frame:SetPoint("TOP",UIParent,"TOP",0,0)
+    --self.Frame:SetPoint("CENTER")
     self.Frame:SetSize(64,64)
     self.Frame:SetMovable(true)
     self.Frame:EnableMouse(true)
@@ -36,14 +39,14 @@ function ItemFrame:Create()
     });
     self.Frame:SetBackdropColor(0,0,0,0.5)
     self.Frame:SetScript("OnMouseDown", function(self, button)
-        ItemFrame.console:Print(button)
+        --ItemFrame.console:Print(button)
         if button == "LeftButton" and not self.isMoving then
         self:StartMoving()
         self.isMoving = true
         end
     end)
     self.Frame:SetScript("OnMouseUp", function(self, button)
-        ItemFrame.console:Print(button)
+        --ItemFrame.console:Print(button)
         if button == "LeftButton" and self.isMoving then
         self:StopMovingOrSizing()
         self.isMoving = false
@@ -51,7 +54,7 @@ function ItemFrame:Create()
     end)
 
     self.Frame:SetScript("OnHide", function(self)
-        self.console.Print(button)
+        --self.console.Print(button)
         if ( self.isMoving ) then
         self:StopMovingOrSizing()
         self.isMoving = false
@@ -67,18 +70,22 @@ function ItemFrame:AddItem(ItemNumber, bagData)
     --self.console:Print(itemNum)
     local item = bagData.itemData[itemNum]
     if (item ~= nil) then
-        self.console:Print(item.itemLink) 
-        self.console:Print(item.Count)
+        --self.console:Print(item.itemLink) 
+        --self.console:Print(item.Count)
         if (self.Buttons[itemNum] ~= nil) then
             --button found 
             --self.console:Print("countLabel"..self.Buttons[itemNum].countLabel)
             self.Buttons[itemNum].countLabel:SetText(item.Count)
         else
-            
+            local buttonCount = ItemFrame:ButtonCount() +1
+            --self.console:Print("buttonCount"..buttonCount)
             local newButton = CreateFrame("Button","ItemFrame"..itemNum,self.Frame);
-            newButton:SetSize(32,32);
-            newButton:SetPoint("CENTER",ItemFrame.Frame,"LEFT",20+(40*ItemFrame:ButtonCount()),0)
-            ItemFrame.Frame:SetSize((40*ItemFrame:ButtonCount())+44,64)
+            local sizePerIcon = ItemFrame.IconSize + (2 * ItemFrame.SidePadding)
+            --self.console:Print("sizePerIcon"..(sizePerIcon*buttonCount))
+            newButton:SetSize(ItemFrame.IconSize,ItemFrame.IconSize);
+            newButton:SetPoint("LEFT",ItemFrame.Frame,"LEFT",(ItemFrame.SidePadding) + ((ItemFrame.SidePadding+ItemFrame.IconSize) * (buttonCount-1)),0)
+            ItemFrame.Frame:SetSize(sizePerIcon* buttonCount ,ItemFrame.IconSize+32)
+            --ItemFrame.Frame:SetSize(96,96)
             newButton:SetNormalTexture(item.texture)
             newButton:SetText(item.itemLink)
             newButton:Show()

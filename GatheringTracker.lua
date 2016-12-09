@@ -16,26 +16,10 @@ local options = {
     },
 }
 
---[[
-function GatheringTracker:InitReady()
-    if (GatheringTrackerDBChr == nil) then
-        self:Print("|cFF0000FFGatheringTrackerDBChr not ready|r")
-        else
-        if (not GatheringTrackerDBChr.status == "ready") then
-            self:Print("|cFFFF0000Not Ready|r")
-        else
-            self:Print("|cFF00FF00Ready|r")
-        end
-    end
-    
-end
-]]
 
 
 function GatheringTracker:OnInitialize()
   -- Code that you want to run when the addon is first loaded goes here.
-    --self:Print("OnInitialize")
-    --self:InitReady()
     self.db = LibStub("AceDB-3.0"):New("GatheringTrackerDB")
     options.args.profile = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
     LibStub("AceConfig-3.0"):RegisterOptionsTable("GatheringTracker", options, {"gt", "GatheringTracker"})
@@ -92,7 +76,7 @@ function GatheringTracker:SetTimeFrame(info,input)
 end
 
 function GatheringTracker:PLAYER_ENTERING_WORLD(eventName)
-    self:Print(eventName)
+    --self:Print(eventName)
     BagData:ScanBags() -- scan bags on login
     if (GatheringTrackerDBChr ~= nil and GatheringTrackerDBChr.bagdata ~= nil and  GatheringTrackerDBChr.bagdata.changes ~= nil) then
         if (BagData:AnyChanges()) then
@@ -116,7 +100,7 @@ function GatheringTracker:BAG_UPDATE(eventName,bagId)
 end
 
 function GatheringTracker:BAG_UPDATE_DELAYED(eventName)
-    self:Print(eventName)
+    --self:Print(eventName)
     self:FinalizeTracking()
 end
 
