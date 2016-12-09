@@ -71,6 +71,7 @@ function ItemFrame:AddItem(ItemNumber, bagData)
         self.console:Print(item.Count)
         if (self.Buttons[itemNum] ~= nil) then
             --button found 
+            --self.console:Print("countLabel"..self.Buttons[itemNum].countLabel)
             self.Buttons[itemNum].countLabel:SetText(item.Count)
         else
             
@@ -88,7 +89,6 @@ function ItemFrame:AddItem(ItemNumber, bagData)
             newButton.mainLabel:SetPoint("TOP", newButton,"BOTTOM",0,0)
             newButton.mainLabel:SetText("")
             self.Buttons[itemNum] = newButton
-            
         end
     end
 end
@@ -103,6 +103,6 @@ end
 function ItemFrame:Update(bagData)
     for key,value in pairs(self.Buttons) do
         local item = bagData.itemData[key]
-        value.countLabel = item.Count
+        value.countLabel:SetText(item.Count)
     end
 end
