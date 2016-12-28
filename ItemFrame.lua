@@ -13,12 +13,12 @@ end
 
 function ItemFrame:Init(console)
     self.console = console
-    self.Buttons = {}
 end
 
 
 
 function ItemFrame:Create()
+    
     self.Frame = CreateFrame("Frame","ItemFrame",UIParent)
     self.Frame:ClearAllPoints()
     self.Frame:SetPoint("TOP",UIParent,"TOP",0,0)
@@ -60,9 +60,9 @@ function ItemFrame:Create()
         self.isMoving = false
         end
     end)
+    self.Buttons = {}
     self.Frame:Show()
 end
-
 
 
 function ItemFrame:AddItem(itemNumber, bagData,tooltipLine,topLabelText,bottomLabelText)

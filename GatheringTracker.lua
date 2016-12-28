@@ -16,7 +16,7 @@ local options = {
     },
 }
 
-
+GatheringTrackerFrame = CreateFrame("Frame")
 
 function GatheringTracker:OnInitialize()
   -- Code that you want to run when the addon is first loaded goes here.
@@ -26,21 +26,23 @@ function GatheringTracker:OnInitialize()
     GatheringTracker:RegisterEvent("BAG_UPDATE")
     GatheringTracker:RegisterEvent("BAG_UPDATE_DELAYED")
     GatheringTracker:RegisterEvent("PLAYER_ENTERING_WORLD")
-
     if (GatheringTrackerDBChr == nil) then
         self:Print("Firts time setup for character data")
         GatheringTrackerDBChr = {}
         GatheringTrackerDBChr.status = "ready"
         GatheringTrackerDBChr.bagdata = {}
     end
-  
     if (type(GatheringTrackerDBChr.bagdata) ~= "table") then
         GatheringTrackerDBChr.bagdata = {}
     end 
+    if type(self.ChangesData) ~= "table" then
+        self.ChangesData = {}
+    end
     BagData:Init(self,GatheringTrackerDBChr.bagdata)
     self.StartTime = math.floor(GetTime())
     ItemFrame:Init(self)
     ItemFrame:Create()
+    GatheringTrackerFrame:SetScript("OnUpdate",GatheringTracker_UpdateItems)
 end
 
 function GatheringTracker:OnEnable()
@@ -118,7 +120,7 @@ end
 
 
 function GatheringTracker:FinalizeTracking()
-    local maxTimeGap = 60*5
+    --local maxTimeGap = 60*5
     --self:Print("FinalizeTracking")
     if (BagData:AnyChanges()) then
             --self:Print("Item changes")
@@ -128,22 +130,23 @@ function GatheringTracker:FinalizeTracking()
                 if (value > 0) then
                     --self:Print("About to add Item")
                     
-                    local timeSinceLastGather = GatheringTracker:AddItem(key,value)
-                    if (timeSinceLastGather < maxTimeGap) then
-                        local timeToGoal,rate = GatheringTracker:GetTimes(key,100)
-                        local tooltip = "Time to next multiple of 100 gathered " .. GatheringTracker.to_hms_string(timeToGoal)
-                        ItemFrame:AddItem(key,GatheringTrackerDBChr.bagdata,tooltip, GatheringTracker.to_hms_string(timeToGoal))
-                    end
+                    --local timeSinceLastGathered = GatheringTracker:GetItemLastUpdated(key)
+                    GatheringTracker:AddItem(key,value)
+                    --if (timeSinceLastGathered < maxTimeGap) then
+                        
+                    --end
                     --self:Print("added item")
                 elseif (value < 0) then
                     --DEFAULT_CHAT_FRAME:AddMessage(GatheringTrackerDBChr.bagdata.itemData[key].itemLink.."|cFFFF0000 lost |r"..value)
                 end
             end
             BagData:ClearChanges()
+            --update counts
             ItemFrame:Update(GatheringTrackerDBChr.bagdata)
     end
     --self:Print("DONE FinalizeTracking")
 end
+
 
 -- Given a Key,goal, with return:
 -- Time in seconds till the goal is hit
@@ -151,6 +154,7 @@ end
 function GatheringTracker:GetTimes(Key,goal)
     local rateSeconds = 60
     local maxTrackingGap = 60*10
+    local currentTime = GetTime()
     local lastTime = 0 - maxTrackingGap --so even if an item is at zero seconds it's ignored
     local timeStamps = {}
     local itemTimes = self.ChangesData[Key]
@@ -173,47 +177,84 @@ function GatheringTracker:GetTimes(Key,goal)
         end
         lastTime = aTime
     end
+    totalTime =  totalTime + (currentTime - lastTime)
     local timeToGoal = 24*60*60
     local rate = 0
-    if (totalTime > 0) then
+    if (totalCount > 0) then
         --some time was found, this should always be true
-        local ratePerSecond = totalCount / totalTime
+        local ratePerSecond = totalCount / totalTime 
         self:Print("totalCount:"..totalCount)
         self:Print("totalTime:"..totalTime)
         self:Print("Rate per second:"..ratePerSecond)
         rate = rateSeconds * ratePerSecond
         local remainingTillGoal = goal-(totalCount%goal)
         self:Print("Remaining Till Goal:"..remainingTillGoal)
-        timeToGoal =  remainingTillGoal / ratePerSecond
+        timeToGoal =  (remainingTillGoal / ratePerSecond) - (currentTime - lastTime)
+        if (timeToGoal < 1) then
+            timeToGoal = 1
+        end
+        
     end
+
     return timeToGoal,rate
 
 end
 
---return time sense last changeb
+
 function GatheringTracker:AddItem(Key,Amount)
-    local CurrentTime = math.floor(GetTime())
+    local currentTime = GetTime()
     self:Print("Adding Item to gt :"..Key)
-    if type(self.ChangesData) ~= "table" then
-        self.ChangesData = {}
-    end
     if type(self.ChangesData[Key]) ~= "table" then
         self.ChangesData[Key] = {}
     end
+    self.ChangesData[Key][currentTime] = Amount
+end 
+
+--return time sense last change
+function GatheringTracker:GetItemLastUpdated(Key)
+    if type(self.ChangesData[Key]) ~= "table" then
+        self.ChangesData[Key] = {}
+    end
+    local CurrentTime = GetTime()
     local lastTime = 0
     for seconds,amount in pairs(self.ChangesData[Key]) do
         if (seconds > lastTime) then
             lastTime = seconds
         end
     end -- end for loop for last time
-    self.ChangesData[Key][CurrentTime] = Amount
     if lastTime == 0 then
         return 24*60*60 -- one day, incase they turn onthe computer and get an item within 5 minutes 
     end
     return CurrentTime - lastTime
 end
 
+GatheringTracker_Lastpdate = math.floor(GetTime())
 
+function GatheringTracker:UpdateItems()
+    local maxTimeGap = 60*10
+    for key, item in pairs(self.ChangesData) do
+        --self:Print("ItemId:"..key)
+        local timeSinceLastGathered = GatheringTracker:GetItemLastUpdated(key)
+        if (timeSinceLastGathered <= maxTimeGap) then
+            local timeToGoal,rate = GatheringTracker:GetTimes(key,100)
+            local timeStringToGoal =  GatheringTracker.to_hms_string(timeToGoal)
+            local tooltip = "Time to next multiple of 100 gathered " .. timeStringToGoal
+            local rateString = string.format("%.2d", rate)
+            ItemFrame:AddItem(key,GatheringTrackerDBChr.bagdata,tooltip,timeStringToGoal,rateString)
+        end
+    end
+end
+
+function GatheringTracker_UpdateItems()
+    --print("tck")
+    local currentTime = math.floor(GetTime())
+    if (GatheringTracker_Lastpdate < currentTime) then
+        GatheringTracker_Lastpdate = currentTime
+        --GatheringTracker:Print(GatheringTracker.to_hms(currentTime))
+        --GatheringTracker:Print(currentTime)
+        GatheringTracker:UpdateItems()
+    end
+end
 --- helper funtions
 
 
