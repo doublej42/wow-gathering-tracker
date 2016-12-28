@@ -1,6 +1,6 @@
 ItemFrame = {} 
-ItemFrame.IconSize = 32
-ItemFrame.SidePadding = 6
+ItemFrame.IconSize = 37
+ItemFrame.SidePadding = 10
 
 
 function ItemFrame:new(o, console)
@@ -65,39 +65,66 @@ end
 
 
 
-function ItemFrame:AddItem(ItemNumber, bagData)
-    local itemNum = tostring(ItemNumber)
-    --self.console:Print(itemNum)
+function ItemFrame:AddItem(itemNumber, bagData,tooltipLine,topLabelText,bottomLabelText)
+    local itemNum = tostring(itemNumber)
+    --self.console:Print("Adding item to frame number:"..itemNum)
     local item = bagData.itemData[itemNum]
     if (item ~= nil) then
         --self.console:Print(item.itemLink) 
         --self.console:Print(item.Count)
         if (self.Buttons[itemNum] ~= nil) then
+            local itemButton = self.Buttons[itemNum]
             --button found 
             --self.console:Print("countLabel"..self.Buttons[itemNum].countLabel)
-            self.Buttons[itemNum].countLabel:SetText(item.Count)
+            --self.Buttons[itemNum].countLabel:SetText(item.Count)
+            SetItemButtonCount(itemButton,item.Count)
+            itemButton.toolLine = tooltipLine
+            itemButton.bottomLabel:SetText(topLabelText)
+            itemButton.topLabel:SetText(bottomLabelText)
         else
             local buttonCount = ItemFrame:ButtonCount() +1
             --self.console:Print("buttonCount"..buttonCount)
-            local newButton = CreateFrame("Button","ItemFrame"..itemNum,self.Frame);
+            
+            
             local sizePerIcon = ItemFrame.IconSize + (2 * ItemFrame.SidePadding)
             --self.console:Print("sizePerIcon"..(sizePerIcon*buttonCount))
-            newButton:SetSize(ItemFrame.IconSize,ItemFrame.IconSize);
-            newButton:SetPoint("LEFT",ItemFrame.Frame,"LEFT",(IwwtemFrame.SidePadding) + ((ItemFrame.SidePadding+ItemFrame.IconSize) * (buttonCount-1)),0)
+            --itemButton:SetSize(ItemFrame.IconSize,ItemFrame.IconSize);
+            local leftPosition = sizePerIcon * (buttonCount-1)
+            if (buttonCount == 1) then
+                leftPosition = ItemFrame.SidePadding
+            end
             ItemFrame.Frame:SetSize((sizePerIcon * buttonCount),ItemFrame.IconSize+32)
-            --ItemFrame.Frame:SetSize(96,96)
-            newButton:SetNormalTexture(item.texture)
-            newButton:SetText(item.itemLink)
-            newButton:Show()
-            newButton.countLabel = newButton:CreateFontString(nil,"OVERLAY","GameTooltipText")
-            newButton.countLabel:SetPoint("BOTTOM", newButton,"TOP",0,0)
-            newButton.countLabel:SetText(item.Count)
-            newButton.mainLabel = newButton:CreateFontString(nil,"OVERLAY","GameTooltipText")
-            newButton.mainLabel:SetPoint("TOP", newButton,"BOTTOM",0,0)
-            newButton.mainLabel:SetText("")
-            self.Buttons[itemNum] = newButton
+            local itemButton = CreateFrame("Button","ItemFrame"..itemNum,self.Frame,"ItemButtonTemplate");
+            itemButton:SetPoint("LEFT",ItemFrame.Frame,"LEFT",leftPosition,0)
+            SetItemButtonTexture(itemButton,item.texture)
+            itemButton.itemLink = item.itemLink
+            itemButton.itemNumber = ItemNumber
+            itemButton.toolLine = tooltipLine
+            itemButton:SetScript("OnEnter",ItemFrame_OnEnter)
+            itemButton:SetScript("OnLeave",ItemFrame_OnLeave)
+            itemButton:Show()
+            SetItemButtonCount(itemButton,item.Count)
+            itemButton.bottomLabel = itemButton:CreateFontString(nil,"OVERLAY","GameTooltipText")
+            itemButton.bottomLabel:SetPoint("TOP", itemButton,"BOTTOM",0,0)
+            itemButton.bottomLabel:SetText(topLabelText)
+            itemButton.topLabel = itemButton:CreateFontString(nil,"OVERLAY","GameTooltipText")
+            itemButton.topLabel:SetPoint("BOTTOM", itemButton,"TOP",0,0)
+            itemButton.topLabel:SetText(bottomLabelText)
+            self.Buttons[itemNum] = itemButton
         end
     end
+end
+
+function ItemFrame_OnEnter(self, motion)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+    local itemLink = self.itemLink
+	GameTooltip:SetHyperlink(itemLink)
+    GameTooltip:AddLine(self.toolLine)
+    GameTooltip:Show()
+end
+
+function ItemFrame_OnLeave()
+    GameTooltip:Hide()
 end
 
 function ItemFrame:ButtonCount()
@@ -108,8 +135,9 @@ end
 
 
 function ItemFrame:Update(bagData)
-    for key,value in pairs(self.Buttons) do
-        local item = bagData.itemData[key]
-        value.countLabel:SetText(item.Count)
+    for itemNumber,button in pairs(self.Buttons) do
+        local item = bagData.itemData[itemNumber]
+        --value.countLabel:SetText(item.Count)
+            SetItemButtonCount(button,item.Count)
     end
 end

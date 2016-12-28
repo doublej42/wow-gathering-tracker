@@ -85,7 +85,7 @@ function BagData:UpdateItem(bagId,slotId,itemNumber,itemCount)
     --self.console:Print("Updating item number:"..itemNumber.." to "..itemCount.." in bag "..bagId.." slot "..slotId)
     self:InitBag(bagId,slotId)
     if (self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber ~= itemNumber) then -- item in slot changed
-        self.console:Print("An item in bag id "..bagId.." slot "..slotId.." was ".." is now "..itemNumber)
+        --self.console:Print("An item in bag id "..bagId.." slot "..slotId.." was ".." is now "..itemNumber)
         
         local oldItemNumber = self.database.bag[tostring(bagId)][tostring(slotId)].itemNumber
         if (oldItemNumber ~= nil) then -- slot was not empty before empty it and uncount it's contents first
@@ -125,7 +125,7 @@ end
 function BagData:AddItem(itemNumber,itemCount)
     local itemNum = tostring(itemNumber)
     if (itemCount ~= 0) then
-        self.console:Print("Adding "..itemCount.." of "..itemNumber)
+        --self.console:Print("Adding "..itemCount.." of "..itemNumber)
         self.changes[itemNum] = self:ToZero(self.changes[itemNum]) + itemCount
         --self.console:Print("result "..self.changes[tostring(itemNumber)].." of "..itemNumber)
         if (self.changes[itemNum] == 0) then
@@ -164,7 +164,7 @@ function BagData:AnyChanges()
 end
 
 function BagData:ClearChanges()
-   self.console:Print("ClearChanges")
+  -- self.console:Print("ClearChanges")
    wipe(self.changes)
 end
 

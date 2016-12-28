@@ -15,4 +15,5 @@ embeds.xml
 #@end-no-lib-strip@
 ItemFrame.lua
 BagData.lua
+GatherTimer.lua
 GatheringTracker.lua
